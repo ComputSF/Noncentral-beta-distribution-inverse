@@ -2,6 +2,7 @@ function [y,ier]=yinv(z, x, p, q)
 %--------------------------------------------------
 %Inversion of B_(x,y)(p,q)=z.
 %Computes y when z, x, p, q are given.
+%Newton's method is used for the main iterations
 %--------------------------------------------------
 % Outputs:
 %     ier: error flag.
@@ -15,7 +16,7 @@ eps=1.0e-14;
 kmax=10;
 ier=0;
 r= p+q;
-if r>8 && p>5 && q>5 
+if p>9 && q>9 
   zeta= sqrt(2/r)*erfcinv(2*z);
   y= yzeta(zeta, x, p, q, eps);
 else
@@ -49,7 +50,6 @@ if k==kmax
   ier=1;
 end  
 end
-
 function y=illinois(icho,ib,y,z,x,p,q)
 if icho==0
   a=0;
@@ -82,7 +82,6 @@ while erro>eps && n<5
 end
 y=c;
 end      
-
 function yz=yzeta(zeta, x, p, q, eps)
 r= p+q; s2= q/r; c2= p/r; w= x+2*r; 
 r2= r*r; r3= r*r2;
@@ -109,8 +108,8 @@ if abs(zeta)<0.01
   while abs(d) > eps && k < 4
 	k= k+1;  zetak= zeta*zetak; 
     term= yk(k)*zetak; 
-	y= y+term; 
-	d= term/y;
+	  y= y+term; 
+	  d= term/y;
   end
 elseif zeta < -0.5 
   xi= x/(2*r);
@@ -126,22 +125,22 @@ elseif zeta > 0.5
 else
   w= y0*(y0-1)/yk(1);     
   if w+zeta>0
-	y= 2*w*y0/(w+zeta+sqrt((w+zeta)*(w+zeta)-4*zeta*y0*w));
+	  y= 2*w*y0/(w+zeta+sqrt((w+zeta)*(w+zeta)-4*zeta*y0*w));
   else
-	y= (w+zeta-sqrt((w+zeta)*(w+zeta)-4*zeta*y0*w))/(2*zeta);
+	  y= (w+zeta-sqrt((w+zeta)*(w+zeta)-4*zeta*y0*w))/(2*zeta);
   end
 end  
 y1= y; 
 d= 1; k= 0;
 while abs(d) > eps && k < 10
-  k= k+1; [zx,zy,zetak]= zetaxypq(x, y1, p, q);
+  k= k+1; [zy,zetak]= zetaxypq(x, y1, p, q);
   y= y1-(zetak-zeta)/zy;
   d= y/y1-1; 
   y1= y;
 end
 yz= y;
 end
-function [dzetadx, dzetady, zetaxy]=zetaxypq(x,y,p,q)
+function [dzetady, zetaxy]=zetaxypq(x,y,p,q)
 r= p+q; xi= x*y/(2*r); c2= p/r; s2= q/r;
 w= sqrt((xi-c2)*(xi-c2)+4*xi);
 tp= 1/y; 
@@ -153,7 +152,6 @@ end
 if abs(tp-t0) < 1.0e-8
   zeta1= sqrt(w*(c2*(w+c2-xi)+2*xi)/(2*s2));
   zeta= zeta1*(tp-t0);
-  dzetadx= y/(2*r*zeta1);
   y1= -2*sqrt(r*q*(4*r*(p+x)+x*x))/((2*r+x)*(2*r+x));
   dzetady= (x*y*(1-y)+(2*r+x)*y1*zeta1)/(2*y*r*(1-y)*zeta1);
 else
@@ -164,9 +162,8 @@ else
     zeta= -zeta;
   end  
   y0= (x+2*p)/(x+2*r);
-  dzetadx= y*(tp-t0)/(2*r*zeta);
   dzetady= (x*y*(1-y)*(tp-t0)+(2*r+x)*(y-y0))/(2*y*r*(1-y)*zeta);
-end;
+end
 zetaxy=zeta;
 end
 function y=ft(t, s2, xi)
