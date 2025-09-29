@@ -83,29 +83,20 @@ end
 y=c;
 end      
 function yz=yzeta(zeta, x, p, q, eps)
+iNewt=1;
 r= p+q; s2= q/r; c2= p/r; w= x+2*r; 
-r2= r*r; r3= r*r2;
-w2= w*w; w3= w*w2; w4= w*w3; 
-w5= w*w4; w6= w*w5; w7= w*w6; w8=  w*w7;
-w9= w*w8; w10=w*w9; w12= w2*w10; w14= w7*w7; w21= w14*w7;
-s22= s2*s2; s23=s22*s2; s24= s2*s23; s25= s2*s24; s26= s25*s2;
 y0= (x+2*p)/w; 
-yk(1)= -2*sqrt(-(4*s2-w2)*s2)/w2; 
+rho=x/(2*r);
+rho2=rho*rho;
+yk(1)=-sqrt(s2)*sqrt(rho2+2*rho+c2)/(rho+1)^2;
 if abs(zeta)<0.01
-  y12= yk(1)*yk(1); y15= y12*y12*yk(1); y18= y12*y15*yk(1);
-  yk(2)= -(8/3)*(48*s22*r-12*w2*s2*r-8*w*s22+w4*r)*s2/(y12*w7);
-  yk(3)= (16/9)*(w8*r2+9216*s24*r2-5760*s23*w2*r2+64*s24*w2+...
-		 1920*s23*w3*r+960*s22*w4*r2-144*s23*w4-160*s22*w5*r...
-         -60*s2*w6*r2-3072*s24*w*r)*s22/(y15*w14);
-  yk(4)= -(256/135)*(1105920*s26*r3-w12*r3-218880*s24*w5*r2-...
-		 46080*s25*w4*r+414720*s24*w4*r3-552960*s26*w*r2...
-         +552960*s25*w3*r2+512*s26*w3-3456*s25*w5...
-         -72*s2*w10*r3+46080*s26*w2*r+24480*s23*w7*r2...
-         -840*s22*w9*r2-60480*s23*w6*r3+32640*s24*w6*r-...
-		 1105920*s25*w2*r3-1728*s24*w7+3744*s22*w8*r3...
-         -2160*s23*w8*r)*s23/(y18*w21);
+  iNewt=0;
+  rho3=rho2*rho;
+  rho4=rho3*rho;
+  yk(2)=(1/3)*(-rho4+c2^2*rho-3*c2*rho2-4*rho3-2*c2^2-...
+      8*c2*rho-3*rho2+c2+3*rho)/((rho2+c2+2*rho)*(rho+1)^3);
   y= y0; zetak= 1; k= 0; d= 1;
-  while abs(d) > eps && k < 4
+  while abs(d) > eps && k < 2
 	k= k+1;  zetak= zeta*zetak; 
     term= yk(k)*zetak; 
 	  y= y+term; 
@@ -130,14 +121,16 @@ else
 	  y= (w+zeta-sqrt((w+zeta)*(w+zeta)-4*zeta*y0*w))/(2*zeta);
   end
 end  
-y1= y; 
-d= 1; k= 0;
-while abs(d) > eps && k < 10
-  k= k+1; [zy,zetak]= zetaxypq(x, y1, p, q);
-  y= y1-(zetak-zeta)/zy;
-  d= y/y1-1; 
+if iNewt==1
   y1= y;
-end
+  d= 1; k= 0;
+  while abs(d) > eps && k < 10
+    k= k+1; [zy,zetak]= zetaxypq(x, y1, p, q);
+    y= y1-(zetak-zeta)/zy;
+    d= y/y1-1; 
+    y1= y;
+  end
+end  
 yz= y;
 end
 function [dzetady, zetaxy]=zetaxypq(x,y,p,q)
@@ -153,7 +146,7 @@ if abs(tp-t0) < 1.0e-8
   zeta1= sqrt(w*(c2*(w+c2-xi)+2*xi)/(2*s2));
   zeta= zeta1*(tp-t0);
   y1= -2*sqrt(r*q*(4*r*(p+x)+x*x))/((2*r+x)*(2*r+x));
-  dzetady= (x*y*(1-y)+(2*r+x)*y1*zeta1)/(2*y*r*(1-y)*zeta1);
+  dzetady= -s2/((1-y)*(t0-1)*zeta1);
 else
   ftp= ft(tp, s2, xi); 
   ft0= ft(t0, s2, xi);
@@ -162,7 +155,7 @@ else
     zeta= -zeta;
   end  
   y0= (x+2*p)/(x+2*r);
-  dzetady= (x*y*(1-y)*(tp-t0)+(2*r+x)*(y-y0))/(2*y*r*(1-y)*zeta);
+  dzetady= s2*(t0-tp)/((1-y)*(t0-1)*zeta);
 end
 zetaxy=zeta;
 end
